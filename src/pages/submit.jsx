@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { SubmitFlow } from "../components/submit-flow"
 import { useCaseStore } from "../state/store"
+import { Loader2 } from "lucide-react"
 
 export default function SubmitPage() {
   const navigate = useNavigate()
@@ -33,22 +34,26 @@ export default function SubmitPage() {
 
   if (!currentCase || !currentCase.csvData || !currentCase.columnMapping) {
     return (
-      <div className="p-8 flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
+      <div className="p-4 sm:p-6 lg:p-8 flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="text-sm">Loading...</span>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Submit Cases</h1>
-        <p className="text-muted-foreground">Final step: Submit your validated data</p>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto animate-fade-in">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Submit Cases</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">Final step: Submit your validated data</p>
       </div>
 
       <SubmitFlow
         data={currentCase.csvData.rows}
         mapping={currentCase.columnMapping}
+        fileName={currentCase.fileName}
         onComplete={handleComplete}
         onBack={handleBack}
       />

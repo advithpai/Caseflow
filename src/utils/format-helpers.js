@@ -60,3 +60,61 @@ export function formatPercent(value, total) {
   if (!total) return "0%"
   return `${Math.round((value / total) * 100)}%`
 }
+
+/**
+ * Normalize phone number to E.164 format
+ * Attempts to convert various phone formats to E.164
+ */
+export function normalizePhone(phone, defaultCountryCode = "+1") {
+  if (!phone) return phone
+
+  // Remove all non-digit and non-plus characters
+  let cleaned = phone.replace(/[^\d+]/g, "")
+
+  // If it starts with +, keep it
+  if (cleaned.startsWith("+")) {
+    return cleaned
+  }
+
+  // If it starts with country code (e.g., 91 for India), add +
+  if (cleaned.length > 10) {
+    return "+" + cleaned
+  }
+
+  // Otherwise, add default country code
+  return defaultCountryCode + cleaned
+}
+
+/**
+ * Title case a string (capitalize first letter of each word)
+ */
+export function toTitleCase(str) {
+  if (!str) return str
+  return str
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+}
+
+/**
+ * Trim whitespace from all string fields in an object
+ */
+export function trimObjectStrings(obj) {
+  const trimmed = {}
+  for (const [key, value] of Object.entries(obj)) {
+    trimmed[key] = typeof value === "string" ? value.trim() : value
+  }
+  return trimmed
+}
+
+/**
+ * Format file size
+ */
+export function formatFileSize(bytes) {
+  if (!bytes) return "0 B"
+  const k = 1024
+  const sizes = ["B", "KB", "MB", "GB"]
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`
+}

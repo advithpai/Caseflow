@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,12 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, ArrowLeft } from "lucide-react";
+import { FileText, ArrowLeft, Loader2 } from "lucide-react";
 import { useAuthStore } from "../state/store";
+import { toast } from "sonner";
 
 export default function SignupPage() {
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const { signup, isAuthenticated } = useAuthStore();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -33,9 +34,17 @@ export default function SignupPage() {
     role: "operator",
   });
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/cases", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     const newErrors = {};
 
@@ -61,11 +70,43 @@ export default function SignupPage() {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      setLoading(false);
       return;
     }
 
-    login(formData.email);
-    navigate("/cases");
+    const result = await signup(
+      formData.email,
+      formData.password,
+      formData.name,
+      formData.role
+    );
+    
+    setLoading(false);
+
+    if (result.success) {
+      toast.success("Account created successfully", {
+        duration: 2000,
+      });
+      navigate("/cases", { replace: true });
+    } else {
+      let errorMessage = result.error || "Failed to create account";
+      
+      toast.error(errorMessage, {
+        duration: result.errorCode === "auth/configuration-not-found" ? 10000 : 4000,
+      });
+      
+      if (result.errorCode === "auth/email-already-in-use" || errorMessage.includes("already registered")) {
+        setErrors({ email: "This email is already registered" });
+      } else if (result.errorCode === "auth/weak-password" || errorMessage.includes("weak")) {
+        setErrors({ password: "Password is too weak" });
+      } else if (result.errorCode === "auth/invalid-email" || errorMessage.includes("Invalid email")) {
+        setErrors({ email: "Invalid email address" });
+      }
+      
+      if (result.errorCode === "auth/configuration-not-found" || errorMessage.includes("not enabled")) {
+     
+      }
+    }
   };
 
   const handleChange = (field, value) => {
@@ -80,16 +121,22 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-              <FileText className="h-6 w-6 text-primary" />
+    <div className="min-h-screen min-h-[100dvh] flex items-center justify-center bg-background p-4 sm:p-6 lg:p-8">
+      {/* Background decoration */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
+      </div>
+
+      <Card className="w-full max-w-[400px] sm:max-w-md relative animate-fade-in-up shadow-lg">
+        <CardHeader className="text-center pb-4 sm:pb-6">
+          <div className="flex justify-center mb-4 sm:mb-5">
+            <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-primary/10 flex items-center justify-center">
+              <FileText className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl">Create Account</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-xl sm:text-2xl">Create Account</CardTitle>
+          <CardDescription className="text-sm">
             Join CaseFlow to start managing case data
           </CardDescription>
         </CardHeader>
@@ -103,7 +150,8 @@ export default function SignupPage() {
                 placeholder="John Doe"
                 value={formData.name}
                 onChange={(e) => handleChange("name", e.target.value)}
-                className={errors.name ? "border-destructive" : ""}
+                error={!!errors.name}
+                autoComplete="name"
               />
               {errors.name && (
                 <p className="text-xs text-destructive">{errors.name}</p>
@@ -118,7 +166,8 @@ export default function SignupPage() {
                 placeholder="you@example.com"
                 value={formData.email}
                 onChange={(e) => handleChange("email", e.target.value)}
-                className={errors.email ? "border-destructive" : ""}
+                error={!!errors.email}
+                autoComplete="email"
               />
               {errors.email && (
                 <p className="text-xs text-destructive">{errors.email}</p>
@@ -154,7 +203,8 @@ export default function SignupPage() {
                 placeholder="At least 6 characters"
                 value={formData.password}
                 onChange={(e) => handleChange("password", e.target.value)}
-                className={errors.password ? "border-destructive" : ""}
+                error={!!errors.password}
+                autoComplete="new-password"
               />
               {errors.password && (
                 <p className="text-xs text-destructive">{errors.password}</p>
@@ -171,7 +221,8 @@ export default function SignupPage() {
                 onChange={(e) =>
                   handleChange("confirmPassword", e.target.value)
                 }
-                className={errors.confirmPassword ? "border-destructive" : ""}
+                error={!!errors.confirmPassword}
+                autoComplete="new-password"
               />
               {errors.confirmPassword && (
                 <p className="text-xs text-destructive">
@@ -180,12 +231,19 @@ export default function SignupPage() {
               )}
             </div>
 
-            <Button type="submit" className="w-full">
-              Create Account
+            <Button type="submit" className="w-full h-10 sm:h-11" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                "Create Account"
+              )}
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 sm:mt-8 text-center">
             <Link
               to="/login"
               className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-2 transition-colors"
@@ -194,8 +252,6 @@ export default function SignupPage() {
               Back to Login
             </Link>
           </div>
-
-         
         </CardContent>
       </Card>
     </div>

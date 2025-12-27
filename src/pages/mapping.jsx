@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { SchemaMapper } from "@/components/schema-mapper";
 import { useCaseStore } from "@/state/store";
-import Papa from "papaparse";
+import { Loader2 } from "lucide-react";
 
 export default function MappingPage() {
   const navigate = useNavigate();
@@ -17,31 +17,31 @@ export default function MappingPage() {
 
   const [headers, setHeaders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
+    // Prevent running multiple times
+    if (hasLoadedRef.current) {
+      return;
+    }
+
     if (!currentCase) {
       navigate("/upload");
       return;
     }
 
-    const mockData = generateMockCSVData(currentCase.rowCount);
-    Papa.parse(mockData, {
-      header: true,
-      complete: (results) => {
-        const parsedHeaders = results.meta.fields || [];
-        const rows = results.data;
+    // Check if we have actual CSV data from the upload
+    if (currentCase.csvData?.headers && currentCase.csvData?.rows?.length > 0) {
+      setHeaders(currentCase.csvData.headers);
+      setIsLoading(false);
+      hasLoadedRef.current = true;
+      return;
+    }
 
-        setHeaders(parsedHeaders);
-        updateCase(caseId, {
-          csvData: {
-            headers: parsedHeaders,
-            rows,
-          },
-        });
-        setIsLoading(false);
-      },
-    });
-  }, [caseId, currentCase, navigate, updateCase]);
+    // If no CSV data exists, redirect back to upload
+    // This ensures we always work with real uploaded data
+    navigate("/upload");
+  }, [caseId, navigate, currentCase]);
 
   const handleComplete = (mapping) => {
     updateCase(caseId, {
@@ -57,14 +57,17 @@ export default function MappingPage() {
 
   if (isLoading) {
     return (
-      <div className="p-8 flex items-center justify-center">
-        <div className="text-muted-foreground">Loading CSV data...</div>
+      <div className="p-4 sm:p-6 lg:p-8 flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="text-sm">Loading CSV data...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto animate-fade-in">
       <SchemaMapper
         headers={headers}
         onComplete={handleComplete}
@@ -72,36 +75,4 @@ export default function MappingPage() {
       />
     </div>
   );
-}
-
-function generateMockCSVData(rowCount) {
-  const headers = [
-    "id",
-    "name",
-    "birth_date",
-    "email_address",
-    "telephone",
-    "type",
-    "urgency",
-  ];
-
-  const rows = Array.from({ length: Math.min(rowCount, 100) }, (_, i) => ({
-    id: `CASE-${String(i + 1).padStart(5, "0")}`,
-    name: `Applicant ${i + 1}`,
-    birth_date: `${1970 + (i % 50)}-${String((i % 12) + 1).padStart(
-      2,
-      "0"
-    )}-${String((i % 28) + 1).padStart(2, "0")}`,
-    email_address: `applicant${i + 1}@example.com`,
-    telephone: `+1-555-${String(i).padStart(4, "0")}`,
-    type: ["A", "B", "C", "D"][i % 4],
-    urgency: ["low", "medium", "high", "urgent"][i % 4],
-  }));
-
-  const csv = [
-    headers.join(","),
-    ...rows.map((row) => Object.values(row).join(",")),
-  ].join("\n");
-
-  return csv;
 }

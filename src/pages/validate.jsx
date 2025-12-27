@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ValidationGrid } from "../components/validation-grid";
 import { Button } from "@/components/ui/button";
 import { useCaseStore } from "../state/store";
+import { Loader2 } from "lucide-react";
 
 export default function ValidatePage() {
   const navigate = useNavigate();
@@ -51,26 +52,31 @@ export default function ValidatePage() {
 
   if (!currentCase || !currentCase.csvData || !currentCase.columnMapping) {
     return (
-      <div className="p-8 flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
+      <div className="p-4 sm:p-6 lg:p-8 flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="text-sm">Loading...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
+      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Validate & Fix Data</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Validate & Fix Data</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Review validation errors and fix issues before submission
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={handleBack}>
+        <div className="flex gap-2 sm:gap-3">
+          <Button variant="outline" onClick={handleBack} className="flex-1 sm:flex-none">
             Back
           </Button>
-          <Button onClick={handleContinue}>Continue to Submit</Button>
+          <Button onClick={handleContinue} className="flex-1 sm:flex-none">
+            Continue to Submit
+          </Button>
         </div>
       </div>
 
