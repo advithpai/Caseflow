@@ -31,11 +31,11 @@
 
 ```mermaid
 flowchart LR
-    Browser[Browser (React + Vite)] -->|User actions| App[React App]
-    App -->|CSV parsing| Worker[csv-parser.worker]
-    Worker -->|Parsed data| App
-    App -->|Submit data| API[(Firebase / Mock API)]
-    App -->|Read / Write| Firestore[(Firestore)]
+  Browser["Browser (React + Vite)"] -->|User actions| App["React App"]
+  App -->|CSV parsing| Worker["csv-parser.worker"]
+  Worker -->|Parsed data| App
+  App -->|Submit data| API["Firebase / Mock API"]
+  App -->|Read / Write| Firestore["Firestore"]
 ```
 
 ## Running Locally
