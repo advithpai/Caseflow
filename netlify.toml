@@ -1,0 +1,6 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Explicitly avoid Next plugin by not including it here.
+# This repo is a Vite app; Netlify should publish the `dist` folder.

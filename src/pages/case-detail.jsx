@@ -18,6 +18,7 @@ import {
 import { useCaseStore } from "../state/store";
 import { createBatchImport, updateBatchImport } from "../services/firestore";
 import { toast } from "sonner";
+import { auth } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -71,6 +72,12 @@ export default function CaseDetailPage() {
 
   const handleReviewAndSubmit = async () => {
     if (!caseItem) return;
+    // Ensure user is signed in before creating batch import
+    if (!auth?.currentUser) {
+      toast.error("You must be signed in to start submission")
+      navigate("/login")
+      return
+    }
 
     // Navigate to validation but first create a batch import record
     setSaving(true);
@@ -111,7 +118,8 @@ export default function CaseDetailPage() {
 
       navigate(`/validate/${caseItem.id}`);
     } catch (error) {
-      toast?.error?.(error.message || "Failed to create batch record")
+      console.error("createBatchImport failed", error)
+      toast.error(error.message || "Failed to create batch record")
     } finally {
       setSaving(false);
     }

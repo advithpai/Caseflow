@@ -1,18 +1,16 @@
-"use client"
-
-import { useRouter } from "next/navigation"
+import { useNavigate } from "react-router-dom"
 import { useCaseStore } from "../state/store"
 
 export function useCaseNavigation(caseId) {
-  const router = useRouter()
+  const navigate = useNavigate()
   const currentCase = useCaseStore((state) => state.cases.find((c) => c.id === caseId))
   const updateCase = useCaseStore((state) => state.updateCase)
 
-  const goToMapping = () => router.push(`/mapping/${caseId}`)
-  const goToValidation = () => router.push(`/validate/${caseId}`)
-  const goToSubmit = () => router.push(`/submit/${caseId}`)
-  const goToCases = () => router.push("/cases")
-  const goToUpload = () => router.push("/upload")
+  const goToMapping = () => navigate(`/mapping/${caseId}`)
+  const goToValidation = () => navigate(`/validate/${caseId}`)
+  const goToSubmit = () => navigate(`/submit/${caseId}`)
+  const goToCases = () => navigate("/cases")
+  const goToUpload = () => navigate("/upload")
 
   return {
     currentCase,

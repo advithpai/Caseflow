@@ -15,6 +15,7 @@ import {
   Rocket,
 } from "lucide-react";
 import { submitCases, createBatchImport, updateBatchImport } from "../services/firestore";
+import { auth } from "@/lib/firebase";
 import { toast } from "sonner";
 import { t } from "../i18n";
 
@@ -71,6 +72,12 @@ const SubmitFlow = ({ data, mapping, onComplete, onBack, fileName }) => {
   };
 
   const handleSubmit = async () => {
+    // Ensure user is authenticated before attempting Firestore writes
+    if (!auth?.currentUser) {
+      toast.error(t("submit.authRequired" || "You must be signed in to submit"));
+      return;
+    }
+
     setStatus("submitting");
     setProgress(0);
     setCurrentChunk(0);
@@ -94,7 +101,10 @@ const SubmitFlow = ({ data, mapping, onComplete, onBack, fileName }) => {
           totalRows: data.length,
           batchId: newBatchId,
         });
-      } catch (auditError) {}
+      } catch (auditError) {
+        console.error("createBatchImport failed", auditError);
+        toast.error(t("submit.batchCreateFailed", { message: auditError.message || "Failed to create batch record" }));
+      }
 
       const mappedData = data.map(mapRowData);
 
@@ -172,7 +182,10 @@ const SubmitFlow = ({ data, mapping, onComplete, onBack, fileName }) => {
           successful: allSuccessful.length,
           failed: allFailures.length,
         });
-      } catch (auditError) {}
+      } catch (auditError) {
+        console.error("updateBatchImport failed", auditError);
+        toast.error(t("submit.batchUpdateFailed", { message: auditError.message || "Failed to update batch record" }));
+      }
 
       // Attempt to store the raw CSV data (or a small sample) on the batch record
       try {
