@@ -4,3 +4,6 @@
 
 # Explicitly avoid Next plugin by not including it here.
 # This repo is a Vite app; Netlify should publish the `dist` folder.
+
+[build.environment]
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"
